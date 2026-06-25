@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Run Times Formatter</title>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -30,7 +31,7 @@ body {
     font-family: 'IBM Plex Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-size: 15px;
+    font-size: 17px;
     min-height: 100vh;
     padding: 32px 24px 120px;
 }
@@ -314,7 +315,7 @@ button.generate-btn:hover { background: var(--green-hover); }
     padding: 16px;
 }
 #results-body p {
-    font-size: 15px;
+    font-size: 17px;
     line-height: 1.6;
     padding: 8px 0;
     border-bottom: 1px solid var(--border);
@@ -350,6 +351,94 @@ button.generate-btn:hover { background: var(--green-hover); }
     color: var(--text);
 }
 #time-list p b { color: var(--accent); }
+
+/* MOBILE */
+@media (max-width: 600px) {
+    body {
+        padding: 20px 14px 200px;
+        font-size: 17px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-bottom: 18px;
+    }
+
+    .card-body {
+        padding: 14px;
+        gap: 14px;
+    }
+
+    .loc-btn, .slot-btn, .date-quick-btn {
+        padding: 9px 12px;
+        font-size: 15px;
+    }
+
+    .recur-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .custom-time-row {
+        flex-direction: column;
+    }
+
+    .custom-time-row input,
+    .date-picker-wrap input[type="date"] {
+        width: 100%;
+        font-size: 16px; /* prevents iOS zoom on focus */
+    }
+
+    button.add-row-btn,
+    button.generate-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    #results-body p {
+        font-size: 16px;
+    }
+
+    /* Move current times box to bottom, full width */
+    #current-times {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        border-radius: 0;
+        min-width: unset;
+        padding: 10px 14px;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    #current-times h3 {
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    #time-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+    }
+
+    #time-list p {
+        font-size: 11px;
+    }
+}
 </style>
 </head>
 <body>
