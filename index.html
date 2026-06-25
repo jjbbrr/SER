@@ -455,7 +455,7 @@ button.generate-btn:hover { background: var(--green-hover); }
 <div id="results">
     <div class="results-header">
         <span>Output</span>
-        <button class="copy-btn" id="copy-btn">Copy all</button>
+        <button class="copy-btn" id="copy-btn">Copy</button>
     </div>
     <div id="results-body"></div>
 </div>
@@ -762,11 +762,14 @@ document.getElementById('generate').addEventListener('click', () => {
 // Copy button
 document.getElementById('copy-btn').addEventListener('click', () => {
     const paras = document.querySelectorAll('#results-body p');
-    const text = Array.from(paras).map(p => p.innerText).join('\n');
+    const text = Array.from(paras)
+        .filter(p => !p.innerText.startsWith('Overlaps'))
+        .map(p => p.innerText)
+        .join('\n');
     navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('copy-btn');
         btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy all', 1800);
+        setTimeout(() => btn.textContent = 'Copy', 1800);
     });
 });
 
