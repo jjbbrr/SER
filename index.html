@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Run Times Formatter</title>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #f4f1eb;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #d8d3c8;
+    --text: #1a1814;
+    --text-muted: #7a7670;
+    --accent: #c84b2f;
+    --accent-hover: #a83820;
+    --green: #2a7a4b;
+    --green-hover: #1e5c37;
+    --blue: #1e5fa8;
+    --blue-light: #e8f0fb;
+    --selected-bg: #fff3f1;
+    --selected-border: #c84b2f;
+    --radius: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    min-height: 100vh;
+    padding: 32px 24px 120px;
+}
+
+h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--text);
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 10px;
+}
+
+.event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: var(--text);
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    transition: color 0.15s;
+}
+.remove-btn:hover { color: #fff; }
+
+.card-body {
+    padding: 16px;
+    display: grid;
+    gap: 16px;
+}
+
+/* SECTION LABELS */
+.field-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+/* LOCATION BUTTONS */
+.location-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.loc-btn {
+    padding: 7px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+}
+.loc-btn:hover { border-color: #aaa; background: #e8e4dc; }
+.loc-btn.selected {
+    background: var(--selected-bg);
+    border-color: var(--selected-border);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* TIME SLOT BUTTONS */
+.timeslot-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.slot-btn {
+    padding: 7px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+}
+.slot-btn:hover { border-color: #aaa; background: #e8e4dc; }
+.slot-btn.selected {
+    background: var(--selected-bg);
+    border-color: var(--selected-border);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* CUSTOM TIME */
+.custom-time-row {
+    display: none;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.custom-time-row.visible { display: flex; }
+.custom-time-row input {
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+}
+.custom-time-row input:focus { outline: none; border-color: var(--accent); }
+
+/* DATE BUTTONS */
+.date-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.date-quick-btn {
+    padding: 7px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+}
+.date-quick-btn:hover { border-color: #aaa; background: #e8e4dc; }
+.date-quick-btn.selected {
+    background: var(--selected-bg);
+    border-color: var(--selected-border);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.date-picker-wrap { display: none; }
+.date-picker-wrap.visible {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.date-picker-wrap input[type="date"] {
+    padding: 7px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+}
+.date-picker-wrap input[type="date"]:focus { outline: none; border-color: var(--accent); }
+
+/* RECURRENCE BUTTONS */
+.recur-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.recur-btn {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.recur-btn:hover { border-color: #aaa; background: #e8e4dc; }
+.recur-btn.selected {
+    background: var(--selected-bg);
+    border-color: var(--selected-border);
+    color: var(--accent);
+}
+
+/* ACTION BUTTONS */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+button.add-row-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--blue);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--blue);
+    transition: all 0.15s;
+}
+button.add-row-btn:hover { background: var(--blue-light); }
+
+button.generate-btn {
+    padding: 10px 28px;
+    font-size: 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--green);
+    color: #fff;
+    transition: background 0.15s;
+}
+button.generate-btn:hover { background: var(--green-hover); }
+
+/* RESULTS */
+#results {
+    display: none;
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.results-header {
+    background: var(--text);
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.copy-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.85);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+#results-body {
+    padding: 16px;
+}
+#results-body p {
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+#results-body p:last-child { border-bottom: none; }
+
+/* CURRENT TIMES */
+#current-times {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    font-size: 13px;
+    min-width: 260px;
+}
+#current-times h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+#time-list p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    margin: 4px 0;
+    color: var(--text);
+}
+#time-list p b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h2>Run Times Formatter</h2>
+
+<div id="inputs-container"></div>
+
+<div class="actions">
+    <button class="add-row-btn" id="add-row">+ Add Row</button>
+    <button class="generate-btn" id="generate">Generate</button>
+</div>
+
+<div id="results">
+    <div class="results-header">
+        <span>Output</span>
+        <button class="copy-btn" id="copy-btn">Copy all</button>
+    </div>
+    <div id="results-body"></div>
+</div>
+
+<div id="current-times">
+    <h3>Current local times</h3>
+    <div id="time-list"></div>
+</div>
+
+<script>
+const DateTime = luxon.DateTime;
+
+const locationNames = {
+    "America/Los_Angeles": "Los Angeles",
+    "America/Detroit": "Michigan",
+    "Pacific/Auckland": "Auckland"
+};
+
+const timeSlots = [
+    { label: "10am–12noon", start: "10:00", end: "12:00", duration: 120 },
+    { label: "2–4pm",       start: "14:00", end: "16:00", duration: 120 },
+    { label: "8–10pm",      start: "20:00", end: "22:00", duration: 120 },
+    { label: "Custom",      start: null,    end: null,    duration: null }
+];
+
+function getTodayStr() {
+    return DateTime.now().setZone("America/Los_Angeles").toISODate();
+}
+function getTomorrowStr() {
+    return DateTime.now().setZone("America/Los_Angeles").plus({ days: 1 }).toISODate();
+}
+
+// Helper to manually override known problem timezones in Luxon
+function getTzAbbr(luxonDate, zoneName) {
+    if (zoneName === "Pacific/Auckland") {
+        return luxonDate.isInDST ? "NZDT" : "NZST";
+    }
+    if (zoneName === "Europe/London") {
+        return luxonDate.isInDST ? "BST" : "GMT";
+    }
+    return luxonDate.toFormat("ZZZZ");
+}
+
+let rowCount = 0;
+
+function createRow() {
+    const idx = rowCount++;
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.dataset.idx = idx;
+
+    card.innerHTML = `
+        <div class="card-header">
+            <span>Event ${document.querySelectorAll('.event-card').length + 1}</span>
+            <button class="remove-btn" title="Remove">×</button>
+        </div>
+        <div class="card-body">
+
+            <div class="field-section">
+                <div class="field-label">Location</div>
+                <div class="location-group">
+                    <button class="loc-btn" data-tz="America/Los_Angeles">Los Angeles</button>
+                    <button class="loc-btn" data-tz="America/Detroit">Michigan</button>
+                    <button class="loc-btn" data-tz="Pacific/Auckland">Auckland</button>
+                </div>
+            </div>
+
+            <div class="field-section">
+                <div class="field-label">Time slot</div>
+                <div class="timeslot-group">
+                    <button class="slot-btn" data-slot="0">10am–12noon</button>
+                    <button class="slot-btn" data-slot="1">2–4pm</button>
+                    <button class="slot-btn" data-slot="2">8–10pm</button>
+                    <button class="slot-btn" data-slot="3">Custom</button>
+                </div>
+                <div class="custom-time-row" style="margin-top:10px;">
+                    <div>
+                        <div class="field-label">Start date &amp; time</div>
+                        <input type="datetime-local" class="custom-datetime">
+                    </div>
+                    <div>
+                        <div class="field-label">Duration (minutes)</div>
+                        <input type="number" class="custom-duration" style="width:110px;" placeholder="120">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-section preset-date-section">
+                <div class="field-label">Start date</div>
+                <div class="date-group">
+                    <button class="date-quick-btn" data-which="today">Today</button>
+                    <button class="date-quick-btn" data-which="tomorrow">Tomorrow</button>
+                    <button class="date-quick-btn" data-which="pick">Pick a date…</button>
+                    <div class="date-picker-wrap">
+                        <input type="date" class="date-picker">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-section">
+                <div class="field-label">Occurrences</div>
+                <div class="recur-group">
+                    ${Array.from({length:14},(_,i)=>`<button class="recur-btn" data-n="${i+1}">${i+1}</button>`).join('')}
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    card.querySelector('.remove-btn').addEventListener('click', () => {
+        card.remove();
+        renumberCards();
+    });
+
+    card.querySelectorAll('.loc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            card.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+    });
+
+    const customRow = card.querySelector('.custom-time-row');
+    const presetDateSection = card.querySelector('.preset-date-section');
+    card.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            card.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            const isCustom = btn.dataset.slot === "3";
+            customRow.classList.toggle('visible', isCustom);
+            presetDateSection.style.display = isCustom ? 'none' : '';
+        });
+    });
+
+    const datePicker = card.querySelector('.date-picker');
+    const datePickerWrap = card.querySelector('.date-picker-wrap');
+    card.querySelectorAll('.date-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            card.querySelectorAll('.date-quick-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if (btn.dataset.which === 'pick') {
+                datePickerWrap.classList.add('visible');
+            } else {
+                datePickerWrap.classList.remove('visible');
+                datePicker.value = btn.dataset.which === 'today' ? getTodayStr() : getTomorrowStr();
+            }
+        });
+    });
+
+    card.querySelectorAll('.recur-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            card.querySelectorAll('.recur-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+    });
+
+    return card;
+}
+
+function renumberCards() {
+    document.querySelectorAll('.event-card').forEach((card, i) => {
+        card.querySelector('.card-header span').textContent = `Event ${i + 1}`;
+    });
+}
+
+function addRow() {
+    const container = document.getElementById('inputs-container');
+    container.appendChild(createRow());
+}
+
+document.getElementById('add-row').addEventListener('click', addRow);
+
+// Generate
+document.getElementById('generate').addEventListener('click', () => {
+    const cards = document.querySelectorAll('.event-card');
+    
+    // Group event strings by location
+    const locationGroups = {};
+    // Store every individual time block to check for overlaps
+    const allInstances = [];
+
+    cards.forEach((card, cardIdx) => {
+        const locBtn = card.querySelector('.loc-btn.selected');
+        if (!locBtn) return;
+        const tz = locBtn.dataset.tz;
+        const locationName = locationNames[tz];
+
+        const slotBtn = card.querySelector('.slot-btn.selected');
+        if (!slotBtn) return;
+        const slotIdx = parseInt(slotBtn.dataset.slot);
+        const isCustom = slotIdx === 3;
+
+        const recurBtn = card.querySelector('.recur-btn.selected');
+        const recur = recurBtn ? parseInt(recurBtn.dataset.n) : 1;
+
+        let start, duration;
+
+        if (isCustom) {
+            const dtVal = card.querySelector('.custom-datetime').value;
+            if (!dtVal) return;
+            const durVal = parseInt(card.querySelector('.custom-duration').value) || 120;
+            start = DateTime.fromISO(dtVal, { zone: tz });
+            duration = durVal;
+        } else {
+            const slot = timeSlots[slotIdx];
+            let dateStr = null;
+            const selectedDateBtn = card.querySelector('.date-quick-btn.selected');
+            if (selectedDateBtn) {
+                if (selectedDateBtn.dataset.which === 'today') dateStr = getTodayStr();
+                else if (selectedDateBtn.dataset.which === 'tomorrow') dateStr = getTomorrowStr();
+                else dateStr = card.querySelector('.date-picker').value;
+            } else {
+                dateStr = card.querySelector('.date-picker').value;
+            }
+            if (!dateStr) return;
+            start = DateTime.fromISO(`${dateStr}T${slot.start}`, { zone: tz });
+            duration = slot.duration;
+        }
+
+        if (!start || !start.isValid) return;
+
+        const tzAbbr = getTzAbbr(start, tz);
+        const tzFull = start.offsetNameLong || start.toFormat('ZZZZ');
+        
+        // EEEE, MMMM d forces Luxon to spell everything out
+        const startDateStr = start.toFormat('EEEE, MMMM d');
+        const startTimeStr = start.toFormat('h:mm a');
+        const endTimeStr = start.plus({ minutes: duration }).toFormat('h:mm a');
+
+        let eventText = "";
+        if (recur === 1) {
+            eventText = `${startDateStr}, from ${startTimeStr} to ${endTimeStr} ${tzAbbr} (${tzFull})`;
+        } else {
+            const endDay = start.plus({ days: recur - 1 });
+            const endDateStr = endDay.toFormat('EEEE, MMMM d');
+            eventText = `${startDateStr} through ${endDateStr}, from ${startTimeStr} to ${endTimeStr} ${tzAbbr} (${tzFull})`;
+        }
+
+        // Add to location grouping
+        if (!locationGroups[locationName]) locationGroups[locationName] = [];
+        locationGroups[locationName].push(eventText);
+
+        // Add instances for overlap checking
+        for (let i = 0; i < recur; i++) {
+            const instStart = start.plus({ days: i });
+            const instEnd = instStart.plus({ minutes: duration });
+            allInstances.push({
+                cardIdx,
+                locName: locationName,
+                start: instStart,
+                end: instEnd,
+                dateStr: instStart.toFormat('EEEE, MMMM d')
+            });
+        }
+    });
+
+    const results = [];
+
+    // Compile location groups into one sentence separated by 'and'
+    for (const loc in locationGroups) {
+        results.push(`<b>${loc}</b>: ${locationGroups[loc].join(' and ')}`);
+    }
+
+    // Overlap Checker logic
+    const overlapsMap = {};
+    for (let i = 0; i < allInstances.length; i++) {
+        for (let j = i + 1; j < allInstances.length; j++) {
+            const A = allInstances[i];
+            const B = allInstances[j];
+            
+            // Make sure we only flag overlaps from different events/rows
+            if (A.cardIdx !== B.cardIdx) {
+                // Determine if time boundaries intersect
+                if (A.start < B.end && A.end > B.start) {
+                    const locs = [A.locName, B.locName].sort();
+                    const key = `${locs[0]} and ${locs[1]}`;
+                    if (!overlapsMap[key]) overlapsMap[key] = new Set();
+                    overlapsMap[key].add(A.dateStr); 
+                }
+            }
+        }
+    }
+
+    // Output Overlaps
+    if (allInstances.length > 0) {
+        const overlapKeys = Object.keys(overlapsMap);
+        if (overlapKeys.length === 0) {
+            results.push(`<b>Overlaps</b>: No overlaps.`);
+        } else {
+            overlapKeys.forEach(key => {
+                const dates = Array.from(overlapsMap[key]).join(', ');
+                results.push(`<b>Overlaps</b>: There is an overlap between ${key} on the following dates: ${dates}`);
+            });
+        }
+    }
+
+    const resultsDiv = document.getElementById('results');
+    const resultsBody = document.getElementById('results-body');
+    resultsDiv.style.display = 'block';
+    resultsBody.innerHTML = results.length
+        ? results.map(r => `<p>${r}</p>`).join('')
+        : '<p>No valid events entered.</p>';
+});
+
+// Copy button
+document.getElementById('copy-btn').addEventListener('click', () => {
+    const paras = document.querySelectorAll('#results-body p');
+    const text = Array.from(paras).map(p => p.innerText).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy all', 1800);
+    });
+});
+
+// Current times box update
+function updateCurrentTimes() {
+    const zones = [
+        { name: "New Zealand", tz: "Pacific/Auckland" },
+        { name: "UK", tz: "Europe/London" },
+        { name: "Eastern Time", tz: "America/Detroit" },
+        { name: "Pacific Time", tz: "America/Los_Angeles" }
+    ];
+    const timeList = document.getElementById("time-list");
+    timeList.innerHTML = zones.map(z => {
+        const now = DateTime.now().setZone(z.tz);
+        const dateStr = now.toFormat("EEEE, MMMM d, h:mm a"); // Changed to spell out days/months
+        const tzAbbr = getTzAbbr(now, z.tz);
+        return `<p><b>${z.name}:</b> ${dateStr} ${tzAbbr}</p>`;
+    }).join("");
+}
+setInterval(updateCurrentTimes, 1000);
+updateCurrentTimes();
+
+// Start with one row
+addRow();
+</script>
+</body>
+</html>
